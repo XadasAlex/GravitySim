@@ -5,10 +5,11 @@ import java.util.List;
 import java.util.Random;
 
 public class Orb {
-    private int mass;
+    private long mass;
+    private float density = 22.59f;
     private float x, y;
     private float radius;
-    private final double gravityConst = 6.67430e-11;  // Reale Gravitationskonstante
+    private final double gravityConst = 6.6743e-11;  // Reale Gravitationskonstante
     private MainFrame frame;
     private Color color;
     private float velocityX = 0; // Geschwindigkeit in x-Richtung
@@ -22,8 +23,8 @@ public class Orb {
         this.frame = frame;
         this.color = color;
 
-        this.radius = r.nextInt(24, 180);
-        this.mass = (int) (radius * 10e22);
+        this.radius = r.nextInt(20, 200);
+        this.mass = (long) (Math.pow(radius, 3) * Math.PI * 3/4 * density);
 
         this.x = x;
         this.y = y;
@@ -34,7 +35,19 @@ public class Orb {
 
     @Override
     public String toString() {
-        return String.format("(%.2f|%.2f)\nMass: %d [kg]\nRadius:%.2f [px]", x, y, mass, radius);
+        String formattedMass = formatWithKiloStep(mass);
+        return String.format("(%.2f|%.2f)\nMass: %s [kg]\nRadius:%.2f [px]\nVelocityX:%f\nVelocityY:%f", x, y,formattedMass, radius, velocityX, velocityY);
+    }
+
+    public static String formatWithKiloStep(long number) {
+        String numberStr = Long.toString(number);
+        StringBuilder formatted = new StringBuilder(numberStr);
+
+        for (int i = numberStr.length() - 3; i > 0; i -= 3) {
+            formatted.insert(i, " ");
+        }
+
+        return formatted.toString();
     }
 
     public float getX() {
@@ -45,7 +58,7 @@ public class Orb {
         return y;
     }
 
-    public int getMass() {
+    public long getMass() {
         return mass;
     }
 
@@ -73,7 +86,12 @@ public class Orb {
 
             double acceleration = gravity * orb.getMass() / centerDistanceSquared;
 
-            // unit-vec: therefor divide by center distance so we can multiply by the acceleration
+            // acceleration *= (double) orb.getMass() / getMass();
+
+            // F =  G * m1 * m2 / r^2
+            // F / m = a
+            // F / m
+
             float ax = (float) ((xDistance / centerDistance) * acceleration);
             float ay = (float) ((yDistance / centerDistance) * acceleration);
 
@@ -83,9 +101,10 @@ public class Orb {
             this.x += velocityX * adjustedDt;
             this.y += velocityY * adjustedDt;
 
+            /*
             if (centerDistance < this.radius + orb.getDiameter()) {
                 handleCollision(orb);
-            }
+            }*/
         }
     }
 
@@ -103,7 +122,7 @@ public class Orb {
         float m1 = this.mass;
         float m2 = orb.getMass();
 
-        float e = 0.8f;
+        float e = (int) (0.2 * frame.getElasticity());
         float impulse = (1 + e) * (relativeVelocityX * nx + relativeVelocityY * ny) / (m1 + m2);
 
         this.velocityX += (impulse / this.mass) * nx;
@@ -114,7 +133,7 @@ public class Orb {
 
         float overlap = (this.radius + orb.getDiameter()) - distance;
 
-        if (overlap > 0.1f) { // Verhindert übermäßige Korrektur bei hoher Framerate
+        if (overlap > 0.1f) {
             this.x -= overlap * nx * 0.5f;
             this.y -= overlap * ny * 0.5f;
             orb.x += overlap * nx * 0.5f;
@@ -132,5 +151,13 @@ public class Orb {
 
     public boolean isHighlighted() {
         return highlighted == this;
+    }
+
+    public float getVelocityX() {
+        return velocityX;
+    }
+
+    public float getVelocityY() {
+        return velocityY;
     }
 }

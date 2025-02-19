@@ -4,5 +4,5 @@ public enum SettingState {
     SPEED,
     GRAVITY,
     ACCELERATION,
-    VIEW, CREATE, UNSELECTED
+    VIEW, CREATE, UNSELECTED, ELASTICITY
 }

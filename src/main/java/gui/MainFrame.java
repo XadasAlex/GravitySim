@@ -24,6 +24,8 @@ public class MainFrame {
 
     private int simSpeed = 0;
     private int gravMulitplier = 0;
+    private int elasticity = 0;
+    private Graphics paintComponent;
 
 
     public MainFrame(int width, int height, String title) {
@@ -74,6 +76,7 @@ public class MainFrame {
     private class Screen extends JLabel {
         @Override
         protected void paintComponent(Graphics g) {
+            setPaintComponent(g);
             super.paintComponent(g);
 
 
@@ -114,12 +117,21 @@ public class MainFrame {
                 case GRAVITY -> "Gravity: " + gravMulitplier;
                 case VIEW -> "Viewing Mode click Orb for Information";
                 case CREATE -> "Left click to create an Orb";
+                case ELASTICITY -> "Elasticity: " + (float) (elasticity * 0.2);
                 default -> "No Setting Selected";
             };
 
             g.drawString("Current Setting: " + settingState, 10, 20);
             g.drawString(statusText, 10, 40);
         }
+    }
+
+    private void setPaintComponent(Graphics g) {
+        this.paintComponent = g;
+    }
+
+    private Graphics getPaintComponent() {
+        return paintComponent;
     }
 
     private Orb getHighlightedOrb() {
@@ -133,6 +145,26 @@ public class MainFrame {
     }
 
     private void renderOrbDetails(Graphics g, Orb orb) {
+        float velx = orb.getVelocityX();
+        float vely = orb.getVelocityY();
+
+        // Berechnung der Geschwindigkeit und der Richtung
+        double distance = Math.sqrt(velx * velx + vely * vely);
+        if (distance == 0) return; // Verhindern, dass Division durch null auftritt
+
+        // Normierung der Geschwindigkeit auf eine feste Länge (zum Beispiel 100 Pixel)
+        double normalizedX = (velx / distance) * 100;  // Länge des Vektors in Pixel
+        double normalizedY = (vely / distance) * 100;  // Länge des Vektors in Pixel
+
+        // Zeichne den Vektor von der Position des Orbs
+        int startX = (int) orb.getX();
+        int startY = (int) orb.getY();
+        int endX = (int) (startX + normalizedX);  // Zielpunkt auf der x-Achse
+        int endY = (int) (startY + normalizedY);  // Zielpunkt auf der y-Achse
+
+        g.setColor(Color.RED);
+        g.drawLine(startX, startY, endX, endY);
+
         // Schriftart und -größe festlegen
         g.setFont(new Font("Arial", Font.BOLD, 16));
 
@@ -162,6 +194,8 @@ public class MainFrame {
         for (int i = 0; i < lines.length; i++) {
             g.drawString(lines[i], textX, textY + 16 * i);
         }
+
+        g.setColor(Color.CYAN);
     }
 
     private class KeyHandler implements KeyListener {
@@ -174,20 +208,28 @@ public class MainFrame {
         public void keyPressed(KeyEvent e) {
             if (e.getKeyCode() == KeyEvent.VK_UP) {
                 if (settingState == SettingState.SPEED) {
-                    if (simSpeed < 4) simSpeed += 1;
+                    if (simSpeed < 9) simSpeed++;
                 }
 
                 if (settingState == SettingState.GRAVITY) {
-                    if (gravMulitplier < 5) gravMulitplier += 1;
+                    if (gravMulitplier < 5) gravMulitplier++;
+                }
+
+                if (settingState == SettingState.ELASTICITY) {
+                    if (elasticity < 5) elasticity++;
                 }
             }
             if (e.getKeyCode() == KeyEvent.VK_DOWN) {
                 if (settingState == SettingState.SPEED) {
-                    if (simSpeed > -3) simSpeed -= 1;
+                    if (simSpeed > -4) simSpeed--;
                 }
 
                 if (settingState == SettingState.GRAVITY) {
-                    if (gravMulitplier > -4) gravMulitplier -= 1;
+                    if (gravMulitplier > -4) gravMulitplier--;
+                }
+
+                if (settingState == SettingState.ELASTICITY) {
+                    if (elasticity > 0) elasticity--;
                 }
             }
             if (e.getKeyCode() == KeyEvent.VK_X) {
@@ -204,6 +246,9 @@ public class MainFrame {
             }
             if (e.getKeyCode() == KeyEvent.VK_C) {
                 settingState = SettingState.CREATE;
+            }
+            if (e.getKeyCode() == KeyEvent.VK_E) {
+                settingState = SettingState.ELASTICITY;
             }
         }
 
@@ -259,15 +304,17 @@ public class MainFrame {
 
         for (Orb orb : getOrbs()) {
             int diameter = (int)orb.getDiameter();
+
             int xMin = (int) orb.getX() - (int) (0.7 * diameter / 2);
             int yMin = (int) orb.getY() - (int) (0.7 * diameter / 2);
             int xMax = xMin + diameter;
             int yMax = yMin + diameter;
+
             if (
                     xClicked > xMin &&
-                            xClicked < xMax &&
-                            yClicked < yMax &&
-                            yClicked > yMin
+                    xClicked < xMax &&
+                    yClicked < yMax &&
+                    yClicked > yMin
             ) {
                 orb.setHighlighted();
                 return;
@@ -281,5 +328,9 @@ public class MainFrame {
 
     public int getGravMulitplier() {
         return gravMulitplier;
+    }
+
+    public int getElasticity() {
+        return elasticity;
     }
 }
